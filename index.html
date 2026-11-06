@@ -96,6 +96,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid v
 .mgrid .gh{font-size:14px;font-weight:600;color:var(--muted);text-align:center}
 .mgrid .gr{font-family:var(--f-mono);font-size:16px;font-weight:500}
 .mgrid input{min-height:50px;padding:8px;text-align:center}
+.mgrid input.ro{font:inherit;font-size:19px;background:var(--surface2);color:var(--muted);border:2px dashed var(--line);border-radius:10px;width:100%}
 .calc{font-family:var(--f-mono);font-size:15px;padding:8px 10px;border-radius:6px;background:var(--surface2)}
 .calc.bad{background:var(--nc-soft);color:var(--nc)} .calc.good{background:var(--ok-soft);color:var(--ok)}
 .tools{display:grid;grid-template-columns:1fr;gap:10px}
@@ -2688,6 +2689,8 @@ const GENERAL=[
   I('Pièces de rechange','Stock suffisant de moteurs, capteurs et fixations de modules sur site ?',{id:'OM-5'})]}
 ];
 const TABLE=[
+ {id:'DC',title:'Conformité au design',hint:'Comparer la table aux plans du fournisseur',items:[
+  I('Conformité au design','Vérifier la conformité de la table avec les plans du fournisseur : nombre de pieux, de dampers et de moteurs, profil du torque tube.',{id:'DC-1',m:[['piles','Nombre de pieux','num','Number of piles'],['dampers','Nombre de dampers','num','Number of dampers'],['motors','Nombre de moteurs','num','Number of motors'],['tt','Profil du torque tube','text','Torque tube profile']]})]},
  {id:'PF',title:'Fondation & pieux',items:[
   I('Fondation','Partie visible du béton : pas de fissure, d’effritement ni de coulure de rouille. Stabilité de la fondation. État du sol autour : pas de tassement, de fissuration ni de lessivage ; drainage dégagé.',{id:'PF-1'}),
   I('Pieux','Identifier le type de pieu et contrôler la verticalité (pieux droits et d’aplomb). Mesurer la verticalité du pieu moteur.',{id:'PF-2',m:[['type','Type de pieu','text','Pile type'],['vert','Verticalité pieu moteur (°)','num','Motor pile verticality (°)']]}),
@@ -2698,14 +2701,13 @@ const TABLE=[
   I('Transition pieux / torque tube','En tête de pieu, entretoises ou bagues non métalliques (plastique, caoutchouc) présentes et en bon état.',{id:'TS-3'}),
   I('Moteurs et pivots','Pas de dommage visible, de fuite d’huile ni de boulon manquant.',{id:'TS-4'}),
   I('Dampers','Pas de dommage visible, de fuite d’huile ni de boulon manquant. En bout de longues rangées : pas de fuite d’huile aux joints ni de sable tassé dans le mécanisme.',{id:'TS-5',m:[['type','Type de damper','text','Damper type'],['n','Nb par table','num','Number per table']]}),
-  I('Rails support modules','Aucun élément tordu, flambé ou fortement rouillé ; embouts plastiques en place en bout de rangée.',{id:'TS-6'}),
-  I('Planéité des panneaux','Aucun module visiblement cintré ou affaissé entre les rails.',{id:'TS-7'})]},
+  I('Rails support modules','Aucun élément tordu, flambé ou fortement rouillé ; embouts plastiques en place en bout de rangée.',{id:'TS-6'})]},
  {id:'TO',title:'Fonctionnement tracker',items:[
   I('Vibrations à plat','Tracker vers 0° : surveiller oscillations ou flottement des longues rangées par vent.',{id:'TO-1'}),
   I('Vibrations à forte inclinaison','Tracker à l’inclinaison max : secousses ou bruits anormaux à l’angle max Est ou Ouest.',{id:'TO-2'}),
   I('Rotation des moteurs','Rotation régulière ; pas de grincement ni de point dur.',{id:'TO-3'}),
   I('Inclinaison : mesure / consigne','Pour chaque consigne (60°, 30°, 0°, -30°, -60°), mesurer l’inclinaison réelle à l’inclinomètre numérique au centre de la table.',{id:'TO-4',grid:{cols:[['m','Mesuré (°)','Measured (°)']]},calc:'tiltSet'}),
-  I('Inclinaison le long de la table','Pour chaque consigne, mesurer l’inclinaison au centre et à chaque extrémité de la table, puis comparer.',{id:'TO-5',grid:{cols:[['e1','Extr. 1','Edge 1'],['c','Centre','Centre'],['e2','Extr. 2','Edge 2']]},calc:'tiltGrid'}),
+  I('Inclinaison le long de la table','Pour chaque consigne, mesurer l’inclinaison à chaque extrémité de la table ; la valeur au centre est reprise automatiquement de TO-4.',{id:'TO-5',grid:{cols:[['e1','Extr. 1','Edge 1'],['c','Centre auto','Centre',{item:'TO-4',key:'m'}],['e2','Extr. 2','Edge 2']]},calc:'tiltGrid'}),
   I('Amplitude de rotation','Commander un tracker : il doit atteindre au moins ±60° (plein Est et plein Ouest).',{id:'TO-6',m:[['east','Max Est (°)','num','Max East (°)'],['west','Max Ouest (°)','num','Max West (°)']],calc:'rot'}),
   I('Mise en stow','Mise en stow manuelle depuis le tilt le plus éloigné. Si deux positions de stow, renseigner les deux durées.',{id:'TO-7',m:[['s1','Durée stow 1 (min)','num','Stow 1 time (min)'],['s2','Durée stow 2 (min)','num','Stow 2 time (min)']],calc:'stow2'})]},
  {id:'CO',title:'Corrosion',items:[
@@ -2714,9 +2716,8 @@ const TABLE=[
   I('Corrosion des boulons','Pas de piqûres importantes ni de rouille profonde ; marques de peinture visibles.',{id:'CO-3'})]},
  {id:'EC',title:'Composants électriques associés',items:[
   I('Boîtiers moteurs','Joints et entrées de câbles intacts ; pas d’entrée de sable ni d’humidité.',{id:'EC-1'}),
-  I('Ouverture d’un boîtier moteur','Photographier l’intérieur : traces de rouille, d’humidité ou câblage corrodé ?',{id:'EC-2'}),
-  I('Câbles','Tous fixés à la structure ou sous gaine ; rien qui pende ou traîne au sol.',{id:'EC-3'}),
-  I('Capots et gaines plastiques','Capots moteurs et gaines de câbles : pas de fissure ni de fragilisation par les UV.',{id:'EC-4'})]},
+  I('Câbles','Tous fixés à la structure ou sous gaine ; rien qui pende ou traîne au sol.',{id:'EC-2'}),
+  I('Capots et gaines plastiques','Capots moteurs et gaines de câbles : pas de fissure ni de fragilisation par les UV.',{id:'EC-3'})]},
  {id:'MI',title:'Modules',items:[
   I('Système de fixation des modules','Bon type ; au moins 2 fixations par grand côté de module ; serrées (marques de peinture visibles).',{id:'MI-1'}),
   I('Alignement des panneaux','Tous les panneaux d’une rangée à la même hauteur, aucun plus haut ou plus bas que ses voisins.',{id:'MI-2'}),
@@ -2919,7 +2920,7 @@ function measHTML(scope,it,m){
   if(flat.length)h+='<div class="meas">'+flat.map(f=>'<label class="f">'+esc(f.fr)+inp(f)+'</label>').join('')+'</div>';
   if(it.grid){const cols=it.grid.cols;
     h+='<div class="mgrid" style="grid-template-columns:64px repeat('+cols.length+',minmax(0,1fr))"><span></span>'+cols.map(c=>'<span class="gh">'+esc(c[1])+'</span>').join('');
-    for(const [rk,rl] of ANG){h+='<span class="gr">'+rl+'</span>'+cols.map(c=>inp({key:c[0]+'_'+rk,type:'num'})).join('');}
+    for(const [rk,rl] of ANG){h+='<span class="gr">'+rl+'</span>'+cols.map(c=>c[3]?'<input class="ro" readonly tabindex="-1" data-mirror="'+c[0]+'_'+rk+'" value="'+esc(m[c[0]+'_'+rk]||'')+'" aria-label="'+esc(rl+' '+c[1])+'">':inp({key:c[0]+'_'+rk,type:'num'})).join('');}
     h+='</div>';}
   return h;
 }
@@ -3056,7 +3057,7 @@ function render(keepScroll){
   const y=window.scrollY;
   let h;
   if(S.tab==='visit')h=renderVisit();else if(S.tab==='gen')h=renderGen();else h=renderTable(v.tables.find(t=>t.id===S.tab));
-  $('#main').innerHTML=h;renderTabs();renderBar();renderSave();fillThumbs();
+  $('#main').innerHTML=h;if(v&&S.tab!=='visit')syncMirrors(S.tab==='gen'?'g':S.tab);renderTabs();renderBar();renderSave();fillThumbs();
   if(keepScroll)window.scrollTo(0,y);else window.scrollTo(0,0);
 }
 function getRec(el,create){
@@ -3064,6 +3065,19 @@ function getRec(el,create){
   const map=scope==='g'?v.general:(v.tables.find(t=>t.id===scope)||{}).items;if(!map)return null;
   return create?rec(map,id):map[id]||null;
 }
+function autoStatus(itEl,r){const cb=itEl.querySelector('[data-calc]');if(!cb)return;const c=calcText(cb.dataset.calc,r.m);
+  if(c&&c.bad){if(r.s!=='nc'){r.s='nc';r.auto=true;}}else if(c&&!c.bad){if(r.auto||!r.s){r.s='ok';r.auto=true;}}else if(!c&&r.auto){r.s='';r.auto=false;}
+  setSegUI(itEl,r.s);updCalc(itEl,r);}
+/* copy values into grid columns that mirror another item (TO-5 centre = TO-4 measured) */
+function syncMirrors(scope,srcId){const v=cur();if(!v)return;const map=scope==='g'?v.general:(v.tables.find(t=>t.id===scope)||{}).items;if(!map)return;
+  const secs=scope==='g'?GEN:TAB;
+  for(const def of secs.flatMap(x=>x.items)){if(!def.grid)continue;for(const col of def.grid.cols){const src=col[3];if(!src||(srcId&&src.item!==srcId))continue;
+    const sr=map[src.item];let changed=false;const r=rec(map,def.id);
+    for(const [rk] of ANG){const val=sr&&sr.m?(sr.m[src.key+'_'+rk]||''):'';if((r.m[col[0]+'_'+rk]||'')!==val){r.m[col[0]+'_'+rk]=val;changed=true;}}
+    const el=document.querySelector('.item[data-scope="'+scope+'"][data-item="'+def.id+'"]');
+    if(el){for(const [rk] of ANG){const i=el.querySelector('[data-mirror="'+col[0]+'_'+rk+'"]');if(i)i.value=r.m[col[0]+'_'+rk]||'';}if(changed)autoStatus(el,r);}
+    if(changed&&!el){const c=calcText(def.calc,r.m);if(c&&c.bad){if(r.s!=='nc'){r.s='nc';r.auto=true;}}else if(c&&!c.bad){if(r.auto||!r.s){r.s='ok';r.auto=true;}}else if(!c&&r.auto){r.s='';r.auto=false;}}
+  }}}
 function setSegUI(it,s){it.dataset.s=s||'';it.querySelectorAll('.seg button[data-v]').forEach(x=>{const on=x.dataset.v===s;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on);});}
 function updCalc(it,r){const cb=it.querySelector('[data-calc]');if(!cb)return;const c=calcText(cb.dataset.calc,r.m||{});cb.hidden=!c;cb.className='calc'+(c?(c.bad?' bad':' good'):'');
   cb.textContent=c?c.t+(r.auto&&r.s==='nc'?' → NC automatique (hors tolérance)':r.auto&&r.s==='ok'?' → OK automatique':(c.bad&&r.s!=='nc'?' → hors tolérance, statut modifié manuellement':'')):'';}
@@ -3119,11 +3133,7 @@ document.addEventListener('input',e=>{
     if(el.dataset.dyn!==undefined){const def=defOf(it.dataset.item);const id=el.id,pos=el.selectionStart;const tmp=document.createElement('div');tmp.innerHTML=itemHTML(it.dataset.scope,def,r);const nu=tmp.firstElementChild;it.replaceWith(nu);
       const ni=document.getElementById(id);if(ni){ni.focus();try{ni.setSelectionRange(pos,pos);}catch(e){}}fillThumbs();refreshCounts();const cb2=nu.querySelector('[data-calc]');if(!cb2)return;
       const c=calcText(cb2.dataset.calc,r.m);if(c&&c.bad){if(r.s!=='nc'){r.s='nc';r.auto=true;}}else if(c&&!c.bad){if(r.auto||!r.s){r.s='ok';r.auto=true;}}else if(!c&&r.auto){r.s='';r.auto=false;}setSegUI(nu,r.s);updCalc(nu,r);refreshCounts();return;}
-    const cb=it.querySelector('[data-calc]');if(cb){const c=calcText(cb.dataset.calc,r.m);
-      if(c&&c.bad){if(r.s!=='nc'){r.s='nc';r.auto=true;}}
-      else if(c&&!c.bad){if(r.auto||!r.s){r.s='ok';r.auto=true;}}
-      else if(!c&&r.auto){r.s='';r.auto=false;}
-      setSegUI(it,r.s);updCalc(it,r);refreshCounts();}}
+    autoStatus(it,r);syncMirrors(it.dataset.scope,it.dataset.item);refreshCounts();}
 });
 document.addEventListener('change',async e=>{
   const el=e.target;
@@ -3149,7 +3159,7 @@ document.addEventListener('change',async e=>{
 /* ---------------- Export (Excel + photos in a ZIP) ---------------- */
 function safe(s){return String(s||'').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'');}
 /* ---------------- English wording for reports ---------------- */
-const EN_SEC={SD:'SCADA',FT:'Tracker Operation',OM:'O&M',
+const EN_SEC={SD:'SCADA',FT:'Tracker Operation',OM:'O&M',DC:'Design Compliance',
   PF:'Foundation & Piles',TS:'Tracker Structure',TO:'Tracker Operation',CO:'Corrosion',EC:'Associated Electrical Components',MI:'Modules'};
 const EN={
  'SD-1':['Monitoring system','Monitoring system — is there a central remote monitoring system, or only local controllers on site?'],
@@ -3168,6 +3178,7 @@ const EN={
  'OM-3':['Motor / drive failure rate','Motor / drive failure rate — how many have been replaced? Is this normal for the age of the plant?'],
  'OM-4':['Module replacement rate','Module replacement rate — how many modules have been replaced? Is this normal for the age of the plant?'],
  'OM-5':['Spare parts','Spare parts — enough drives, sensors and module clamps on site to handle breakdowns?'],
+ 'DC-1':['Design compliance','Design compliance — check the table against the supplier drawings: number of piles, dampers and motors, torque tube profile.'],
  'PF-1':['Foundation','Foundation — visible part of the concrete: no cracking, crumbling or rust staining. Foundation stability. Ground around the foundation: no soil sinking, cracking or washing away; drainage clear.'],
  'PF-2':['Piles','Piles — identify the pile type and check verticality (piles straight and upright). Measure the verticality of the motor pile.'],
  'PF-3':['Pile corrosion','Pile corrosion — galvanising touched up with paint where needed; no trace of corrosion.'],
@@ -3177,21 +3188,19 @@ const EN={
  'TS-4':['Motors and pivot points','Motors and pivot points — no visible damage, oil leaking or missing bolts.'],
  'TS-5':['Dampers','Dampers — no visible damage, oil leaking or missing bolts. At the ends of long rows: no oil leaking from seals; no heavy sand packing into the mechanism.'],
  'TS-6':['Module support rails','Module support rails — no bent, buckled or heavily rusted members; plastic end caps in place at row ends.'],
- 'TS-7':['Panels flat on the rails','Panels flat on the rails — no modules visibly bowing or sagging between rails.'],
  'TO-1':['Vibration near flat','Vibration at near-flat — put the tracker around 0°; watch long rows for wobbling or flutter when wind is blowing.'],
  'TO-2':['Vibration at high tilt','Vibration at high tilt — put the tracker at maximum tilt; watch for unusual shaking or noise at maximum east or west angle.'],
  'TO-3':['Motors turning','Motors turning — rotation smooth; no grinding or sticking.'],
  'TO-4':['Tilt angle check – measured vs setpoint','Tilt angle check — for each setpoint (60°, 30°, 0°, -30°, -60°), measure actual tilt with a digital inclinometer at the centre of the table.'],
- 'TO-5':['Tilt angle check – along the table','Tilt angle check — for each setpoint, measure actual tilt at the centre and at each edge of the table; compare values.'],
+ 'TO-5':['Tilt angle check – along the table','Tilt angle check — for each setpoint, measure actual tilt at each edge of the table and compare with the centre value (taken from the setpoint check).'],
  'TO-6':['Rotation range','Rotation range — move a tracker via the controller; confirm it reaches at least ±60° (full east and full west positions).'],
  'TO-7':['Stow','Stow — manual stow from the furthest tilt position. If two stow positions, record both times.'],
  'CO-1':['Structure corrosion','Structure corrosion — torque tube, rail connections and fastening hardware.'],
  'CO-2':['Cut edges and drilled holes','Cut edges and drilled holes — any bare steel exposed at cut or drilled points should be painted or zinc-coated.'],
  'CO-3':['Bolt corrosion','Bolt corrosion — no heavy pitting or deep rust; paint marks still visible.'],
  'EC-1':['Motor boxes','Motor boxes — seals and cable entries intact; no sand or moisture getting in.'],
- 'EC-2':['Motor box opened','Open one motor box — photograph inside; look for rust stains, moisture marks or corroded wiring.'],
- 'EC-3':['Cables','Cables — all clipped to the structure or in conduit; nothing hanging loose or dragging on the ground.'],
- 'EC-4':['Plastic covers and conduits','Plastic covers and conduits — motor covers and cable conduits: no cracking or brittleness from UV.'],
+ 'EC-2':['Cables','Cables — all clipped to the structure or in conduit; nothing hanging loose or dragging on the ground.'],
+ 'EC-3':['Plastic covers and conduits','Plastic covers and conduits — motor covers and cable conduits: no cracking or brittleness from UV.'],
  'MI-1':['Module fastening system','Module fastening system — correct type; at least 2 clamps per long edge of each module; bolts tightened (paint marks visible).'],
  'MI-2':['Panels level','Panels level — all panels in a row sitting at the same height; none higher, lower or proud of their neighbours.'],
  'MI-3':['Module condition','Module condition — no cracks, chips or broken glass. Look closely with a torch at the edges where the clamps touch the glass.']

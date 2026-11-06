@@ -1,5 +1,5 @@
 /* Service worker – Qualification Tracker. Keeps the app usable without network. */
-const VERSION='20261106-1402-768574';
+const VERSION='20261106-1458-b2fcd7';
 const CACHE='qualif-tracker-'+VERSION;
 const APP=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(APP)).then(()=>self.skipWaiting()));});
